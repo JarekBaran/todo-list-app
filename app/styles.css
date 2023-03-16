@@ -1,0 +1,78 @@
+:root {
+	--font-family: sans-serif;
+	--font-weight: 400;
+	--font-size: 14px;
+
+	--color-text: #fff;
+	--color-background: #393053;
+
+	--container-width: 576px;
+	--container-space: 1rem;
+}
+
+* {
+	font-family: var(--font-family);
+	font-weight: var(--font-weight);
+	font-size: var(--font-size);
+	color: var(--color-text);
+	accent-color: var(--color-background);
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
+}
+
+body {
+	background-color: var(--color-background);
+	max-width: var(--container-width);
+	padding: var(--container-space);
+	margin: 0 auto;
+}
+
+h1 {
+	font-size: 1.5rem;
+}
+
+button {
+	background: none;
+	appearance: none;
+	border: none;
+	outline: none;
+	cursor: pointer;
+	margin-left: auto;
+	white-space: nowrap;
+}
+
+input[type=text] {
+	flex-grow: 1;
+	background: none;
+	appearance: none;
+	outline: none;
+	border: none;
+	border: 1px solid transparent;
+}
+
+input[type=text]:not(:disabled) {
+	border-bottom-color: var(--color-text);
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--container-space);;
+	gap: var(--container-space);;
+}
+
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--container-space);;
+}
+
+.todo.complete {
+	opacity: .5;
+}
+
+.todo.complete textarea {
+	text-decoration: line-through;
+}
