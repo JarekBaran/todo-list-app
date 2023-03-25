@@ -30,6 +30,7 @@ body {
 
 h1 {
 	font-size: 1.5rem;
+	white-space: nowrap;
 }
 
 button {
@@ -62,16 +63,23 @@ textarea:not(:disabled) {
 
 .row {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
-	padding: var(--container-space);;
-	gap: var(--container-space);;
+	padding: var(--container-space);
+	gap: var(--container-space);
+}
+
+.controls {
+	display: flex;
+	gap: var(--container-space);
 }
 
 .actions {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--container-space);;
+	margin-left: auto;
+	gap: var(--container-space);
 }
 
 .todo.complete {
