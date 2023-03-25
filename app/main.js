@@ -1,4 +1,5 @@
 let todos = [];
+let draggable = null;
 
 const todoList = document.querySelector('[data-js=show-todo-list]');
 const importBtn = document.querySelector('[data-js=import-todo-list]');
@@ -32,6 +33,13 @@ const addNewTodo = () => {
 const createTodo = (newTodo) => {
 	const todo = document.createElement('li');
 	todo.classList.add('row', 'todo');
+	todo.setAttribute('data-js', 'drag-and-drop');
+
+	const handler = document.createElement('button');
+	handler.type = 'button';
+	handler.innerHTML = '&#8661;';
+	handler.setAttribute('draggable', 'true');
+	handler.setAttribute('data-id', newTodo.id);
 
 	const complete = document.createElement('input');
 	complete.type = 'checkbox';
@@ -56,6 +64,7 @@ const createTodo = (newTodo) => {
 	actions.append(edit);
 	actions.append(remove);
 
+	todo.append(handler);
 	todo.append(complete);
 	todo.append(text);
 	todo.append(actions);
@@ -91,7 +100,19 @@ const createTodo = (newTodo) => {
 		saveTodoList();
 	});
 
-	return {todo, text, edit, remove}
+	return {todo, text}
+}
+
+const moveTodo = (srcID, destID) => {
+	const srcIndex = todos.findIndex((todo) => todo.id == srcID);
+	const destIndex = todos.findIndex((todo) => todo.id == destID);
+
+	movedTodo = todos[srcIndex];
+
+	todos[srcIndex] = todos[destIndex];
+	todos[destIndex] = movedTodo;
+
+	saveTodoList();
 }
 
 const loadTodoList = new Promise(function(resolve, reject) {
@@ -155,6 +176,49 @@ const exportTodoList = () => {
 	URL.revokeObjectURL(link.href);
 }
 
+// Drag and drop handlers
+function handleDragStart(e) {
+	draggable = this;
+	draggable.classList.add('draggable');
+
+	e.dataTransfer.effectAllowed = 'move';
+	e.dataTransfer.setData('text/html', this.innerHTML);
+}
+
+function handleDragOver(e) {
+	if (e.preventDefault) {
+		e.preventDefault();
+	}
+
+	e.dataTransfer.dropEffect = 'move';
+	this.classList.add('over');
+	
+	return false;
+}
+
+function handleDragLeave() {
+	this.classList.remove('over');
+}
+
+function handleDrop(e) {
+	if (e.stopPropagation) {
+		e.stopPropagation();
+	}
+
+	draggable.classList.remove('draggable');
+	this.classList.remove('over');
+	
+	if (draggable != this) {
+		draggable.innerHTML = this.innerHTML;
+		this.innerHTML = e.dataTransfer.getData('text/html');
+
+		moveTodo(draggable.querySelector('[draggable=true]').dataset.id, this.querySelector('[draggable=true]').dataset.id);
+	}
+
+	return false;
+}
+
+// App init
 (function() {
 	loadTodoList.then(displayTodoList(), error => console.warn(error));
 
@@ -165,6 +229,13 @@ const exportTodoList = () => {
 
 		document.querySelectorAll('textarea').forEach(textarea => {
 			autoHeight(textarea);
+		});
+
+		document.querySelectorAll('[data-js=drag-and-drop]').forEach(function(dnd) {
+		  dnd.addEventListener('dragstart', handleDragStart, false);
+		  dnd.addEventListener('dragover', handleDragOver, false);
+		  dnd.addEventListener('dragleave', handleDragLeave, false);
+		  dnd.addEventListener('drop', handleDrop, false);
 		});
 	});
 })();
