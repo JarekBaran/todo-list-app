@@ -1,6 +1,8 @@
 let todos = [];
 
 const todoList = document.querySelector('[data-js=show-todo-list]');
+const importBtn = document.querySelector('[data-js=import-todo-list]');
+const exportBtn = document.querySelector('[data-js=export-todo-list]');
 const newTodoBtn = document.querySelector('[data-js=add-new-todo]');
 
 const addNewTodo = () => {
@@ -95,19 +97,61 @@ const loadTodoList = new Promise(function(resolve, reject) {
 
 const saveTodoList = () => localStorage.setItem('todo-list', JSON.stringify(todos));
 
-const displayTodoList = (loadedList) => loadedList.forEach(
-	listElement => {
-		const {todo} = createTodo(listElement);
+const displayTodoList = () => {
+	todoList.innerHTML = '';
 
-		todoList.append(todo);
+	todos.forEach(
+		listElement => {
+			const {todo} = createTodo(listElement);
+
+			todoList.append(todo);
+		}
+	);
+}
+
+const importTodoList = () => {
+	const inputFile = document.createElement('input');
+
+	inputFile.type = 'file';
+	inputFile.accept = '.json';
+	
+	if (window.confirm('Are you sure? This will overwrite the current todo list!')) {
+		inputFile.click();
 	}
-);
+
+	inputFile.addEventListener('change', () => {
+		if (inputFile.value.length) {
+			const reader = new FileReader();
+
+			reader.readAsText(inputFile.files[0]);
+
+			reader.onload = function () {
+				todos = JSON.parse(reader.result);
+
+				displayTodoList();
+				saveTodoList();
+			}
+		}
+	});
+}
+
+const exportTodoList = () => {
+	if (!todos.length) return alert('Todo list is empty! Please add some todos before export.');
+
+	const file = new Blob([JSON.stringify(todos)], {type: 'text/plain'});
+	const link = document.createElement('a');
+
+	link.href = URL.createObjectURL(file);
+	link.download = `todo-list-${new Date().toJSON().slice(0,10).toString()}.json`;
+	link.click();
+
+	URL.revokeObjectURL(link.href);
+};
 
 (function() {
+	importBtn.addEventListener('click', importTodoList);
+	exportBtn.addEventListener('click', exportTodoList);
 	newTodoBtn.addEventListener('click', addNewTodo);
 
-	loadTodoList.then(
-		result => displayTodoList(result),
-		error => console.warn(error)
-	  );
+	loadTodoList.then(displayTodoList(), error => console.warn(error));
 })();
