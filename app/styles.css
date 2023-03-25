@@ -46,16 +46,17 @@ input[type=file] {
 	display: none;
 }
 
-input[type=text] {
+textarea {
 	flex-grow: 1;
 	background: none;
 	appearance: none;
 	outline: none;
-	border: none;
+	resize: none;
+	overflow: hidden;
 	border: 1px solid transparent;
 }
 
-input[type=text]:not(:disabled) {
+textarea:not(:disabled) {
 	border-bottom-color: var(--color-text);
 }
 

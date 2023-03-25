@@ -5,6 +5,11 @@ const importBtn = document.querySelector('[data-js=import-todo-list]');
 const exportBtn = document.querySelector('[data-js=export-todo-list]');
 const newTodoBtn = document.querySelector('[data-js=add-new-todo]');
 
+const autoHeight = (element) => {
+	element.style.height = `auto`;
+	element.style.height = `${element.scrollHeight}px`;
+}
+
 const addNewTodo = () => {
 	const newTodo = {
 		id: new Date().getTime(),
@@ -34,9 +39,9 @@ const createTodo = (newTodo) => {
 
 	newTodo.complete && todo.classList.add('complete');
 
-	const text = document.createElement('input');
-	text.type = 'text';
-	text.value = newTodo.text;
+	const text = document.createElement('textarea');
+	text.innerText = newTodo.text;
+	text.setAttribute('rows', '1');
 	text.setAttribute('disabled', '');
 
 	const actions = document.createElement('div');
@@ -64,6 +69,8 @@ const createTodo = (newTodo) => {
 
 	text.addEventListener('input', () => {
 		newTodo.text = text.value;
+
+		autoHeight(text);
 	});
 
 	text.addEventListener('blur', () => {
@@ -146,12 +153,18 @@ const exportTodoList = () => {
 	link.click();
 
 	URL.revokeObjectURL(link.href);
-};
+}
 
 (function() {
-	importBtn.addEventListener('click', importTodoList);
-	exportBtn.addEventListener('click', exportTodoList);
-	newTodoBtn.addEventListener('click', addNewTodo);
-
 	loadTodoList.then(displayTodoList(), error => console.warn(error));
+
+	window.addEventListener('load', () => {
+		importBtn.addEventListener('click', importTodoList);
+		exportBtn.addEventListener('click', exportTodoList);
+		newTodoBtn.addEventListener('click', addNewTodo);
+
+		document.querySelectorAll('textarea').forEach(textarea => {
+			autoHeight(textarea);
+		});
+	});
 })();
