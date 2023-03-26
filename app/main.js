@@ -94,10 +94,12 @@ const createTodo = (newTodo) => {
 	});
 
 	remove.addEventListener('click', () => {
-		todos = todos.filter(todo => todo.id != newTodo.id);
-		todo.remove();
-
-		saveTodoList();
+		if (window.confirm(`Remove todo? - "${newTodo.text}"`)) {
+			todos = todos.filter(todo => todo.id != newTodo.id);
+			todo.remove();
+	
+			saveTodoList();
+		}
 	});
 
 	return {todo, text}
