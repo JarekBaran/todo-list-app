@@ -85,6 +85,8 @@ const createTodo = (newTodo) => {
 	text.addEventListener('blur', () => {
 		text.setAttribute('disabled', '');
 
+		!newTodo.text.length && todo.remove();
+
 		saveTodoList();
 	});
 
