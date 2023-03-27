@@ -74,11 +74,6 @@ textarea:not(:disabled) {
 	gap: var(--container-space);
 }
 
-.controls {
-	display: flex;
-	gap: var(--container-space);
-}
-
 .actions {
 	display: flex;
 	flex-wrap: wrap;
