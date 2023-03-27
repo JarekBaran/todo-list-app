@@ -63,8 +63,9 @@ const createTodo = (newTodo) => {
 	const complete = document.createElement(`input`);
 	complete.type = `checkbox`;
 	complete.checked = newTodo.complete;
-
-	newTodo.complete && todo.classList.add(`complete`);
+	complete.checked
+		? (complete.setAttribute(`checked`, `true`), todo.classList.add(`complete`))
+		: (complete.removeAttribute(`checked`), todo.classList.remove(`complete`));
 
 	const text = document.createElement(`textarea`);
 	text.innerText = newTodo.text;
@@ -86,7 +87,9 @@ const createTodo = (newTodo) => {
 
 	complete.addEventListener(`change`, () => {
 		newTodo.complete = complete.checked;
-		newTodo.complete ? todo.classList.add(`complete`) : todo.classList.remove(`complete`);
+		newTodo.complete
+			? (complete.setAttribute(`checked`, `true`), todo.classList.add(`complete`))
+			: (complete.removeAttribute(`checked`), todo.classList.remove(`complete`));
 
 		saveTodoList();
 	});
