@@ -6,11 +6,19 @@ const importListBtn = document.querySelector(`[data-js=import-todo-list]`);
 const exportListBtn = document.querySelector(`[data-js=export-todo-list]`);
 const newTodoBtn = document.querySelector(`[data-js=add-new-todo]`);
 
+// Helpers
 const autoHeight = (element) => {
 	element.style.height = `auto`;
 	element.style.height = `${element.scrollHeight}px`;
 }
 
+const toggleComplete = (complete, todo) => {
+	complete.checked
+		? (complete.setAttribute(`checked`, `true`), todo.classList.add(`complete`))
+		: (complete.removeAttribute(`checked`), todo.classList.remove(`complete`));
+}
+
+// Todo
 const addNewTodo = () => {
 	const newTodo = {
 		id: new Date().getTime(),
@@ -30,42 +38,32 @@ const addNewTodo = () => {
 	saveTodoList();
 }
 
-const replaceTodo = (srcID, destID) => {
-	const srcIndex = todos.findIndex((todo) => todo.id == srcID);
-	const destIndex = todos.findIndex((todo) => todo.id == destID);
-
-	movedTodo = todos[srcIndex];
-
-	todos[srcIndex] = todos[destIndex];
-	todos[destIndex] = movedTodo;
-
+const replaceTodo = (srcIndex, targetIndex) => {
+	todos.splice(targetIndex, 0, todos.splice(srcIndex, 1)[0]);
 	saveTodoList();
 }
 
 const removeTodo = (removeTodoId, createdTodo) => {
 	todos = todos.filter(todo => todo.id != removeTodoId);
 	createdTodo.remove();
-
 	saveTodoList();
 }
 
 const createTodo = (newTodo) => {
 	const todo = document.createElement(`li`);
 	todo.classList.add(`row`, `todo`);
+	todo.setAttribute(`data-id`, newTodo.id);
 	todo.setAttribute(`data-js`, `drag-and-drop`);
 
 	const handler = document.createElement(`button`);
 	handler.type = `button`;
 	handler.innerHTML = `&#8661;`;
 	handler.setAttribute(`draggable`, `true`);
-	handler.setAttribute(`data-id`, newTodo.id);
 
 	const complete = document.createElement(`input`);
 	complete.type = `checkbox`;
 	complete.checked = newTodo.complete;
-	complete.checked
-		? (complete.setAttribute(`checked`, `true`), todo.classList.add(`complete`))
-		: (complete.removeAttribute(`checked`), todo.classList.remove(`complete`));
+	toggleComplete(complete, todo);
 
 	const text = document.createElement(`textarea`);
 	text.innerText = newTodo.text;
@@ -82,15 +80,11 @@ const createTodo = (newTodo) => {
 	remove.innerHTML = `&#10006; Remove`;
 
 	actions.append(edit, remove);
-
 	todo.append(handler, complete, text, actions);
 
 	complete.addEventListener(`change`, () => {
 		newTodo.complete = complete.checked;
-		newTodo.complete
-			? (complete.setAttribute(`checked`, `true`), todo.classList.add(`complete`))
-			: (complete.removeAttribute(`checked`), todo.classList.remove(`complete`));
-
+		toggleComplete(complete, todo);
 		saveTodoList();
 	});
 
@@ -116,72 +110,10 @@ const createTodo = (newTodo) => {
 	return {todo, text}
 }
 
-const loadTodoList = new Promise(function(resolve, reject) {
-	const loadedList = localStorage.getItem(`todo-list`);
-
-	loadedList
-		? resolve(todos = JSON.parse(loadedList))
-		: reject(`The todo-list in local storage not exists!`);
-});
-
-const saveTodoList = () => localStorage.setItem(`todo-list`, JSON.stringify(todos));
-
-const displayTodoList = () => {
-	todoList.innerHTML = ``;
-
-	todos.forEach(
-		listElement => {
-			const {todo} = createTodo(listElement);
-
-			todoList.append(todo);
-		}
-	);
-}
-
-const importTodoList = () => {
-	const inputFile = document.createElement(`input`);
-
-	inputFile.type = `file`;
-	inputFile.accept = `.json`;
-
-	inputFile.addEventListener(`change`, () => {
-		if (inputFile.value.length) {
-			const reader = new FileReader();
-
-			reader.readAsText(inputFile.files[0]);
-
-			reader.onload = function () {
-				todos = JSON.parse(reader.result);
-
-				displayTodoList();
-				saveTodoList();
-			}
-		}
-	});
-
-	window.confirm(`Are you sure? This will overwrite the current todo list!`) && inputFile.click();
-}
-
-const exportTodoList = () => {
-	if (!todos.length) return alert(`Todo list is empty! Please add some todos before export.`);
-
-	const file = new Blob([JSON.stringify(todos)], {type: `text/plain`});
-	const link = document.createElement(`a`);
-
-	link.href = URL.createObjectURL(file);
-	link.download = `todo-list-${new Date().toJSON().slice(0,10).toString()}.json`;
-	link.click();
-
-	URL.revokeObjectURL(link.href);
-}
-
 // Drag and drop handlers
 function handleDragStart(e) {
 	draggable = this;
 	draggable.classList.add(`draggable`);
-
-	e.dataTransfer.effectAllowed = `move`;
-	e.dataTransfer.setData(`text/html`, this.innerHTML);
 }
 
 function handleDragOver(e) {
@@ -208,13 +140,89 @@ function handleDrop(e) {
 	this.classList.remove(`over`);
 	
 	if (draggable != this) {
-		draggable.innerHTML = this.innerHTML;
-		this.innerHTML = e.dataTransfer.getData(`text/html`);
+		const srcIndex = todos.findIndex(todo => todo.id == draggable.dataset.id);
+		const targetIndex = todos.findIndex(todo => todo.id == this.dataset.id);
 
-		replaceTodo(draggable.querySelector(`[draggable=true]`).dataset.id, this.querySelector(`[draggable=true]`).dataset.id);
+		(srcIndex > targetIndex)
+			? this.before(draggable)
+			: this.after(draggable);
+
+		replaceTodo(srcIndex, targetIndex);
 	}
 
 	return false;
+}
+
+// List
+const displayTodoList = () => {
+	todoList.innerHTML = ``;
+
+	todos.forEach(
+		listElement => {
+			const {todo} = createTodo(listElement);
+			todoList.append(todo);
+		}
+	);
+
+	todoList.querySelectorAll(`textarea`).forEach(textarea => {
+		autoHeight(textarea);
+	});
+
+	todoList.querySelectorAll(`[data-js=drag-and-drop]`).forEach(dnd => {
+		dnd.addEventListener(`dragstart`, handleDragStart, false);
+		dnd.addEventListener(`dragover`, handleDragOver, false);
+		dnd.addEventListener(`dragleave`, handleDragLeave, false);
+		dnd.addEventListener(`drop`, handleDrop, false);
+	});
+
+	saveTodoList();
+}
+
+const loadTodoList = new Promise((resolve, reject) => {
+	const loadedList = localStorage.getItem(`todo-list`);
+
+	loadedList
+		? resolve(todos = JSON.parse(loadedList))
+		: reject(`The todo-list in local storage not exists!`);
+});
+
+const saveTodoList = () => localStorage.setItem(`todo-list`, JSON.stringify(todos));
+
+const importTodoList = () => {
+	const inputFile = document.createElement(`input`);
+
+	inputFile.type = `file`;
+	inputFile.accept = `.json`;
+
+	inputFile.addEventListener(`change`, () => {
+
+		if (inputFile.value.length) {
+			const reader = new FileReader();
+
+			reader.readAsText(inputFile.files[0]);
+
+			reader.onload = function () {
+				todos = JSON.parse(reader.result);
+
+				displayTodoList();
+			}
+		}
+	});
+
+	window.confirm(`Are you sure? This will overwrite the current todo list!`) && inputFile.click();
+}
+
+const exportTodoList = () => {
+	if (!todos.length) return alert(`Todo list is empty! Please add some todos before export.`);
+
+	const file = new Blob([JSON.stringify(todos)], {type: `text/plain`});
+	const link = document.createElement(`a`);
+
+	link.href = URL.createObjectURL(file);
+	link.download = `todo-list-${new Date().toJSON().slice(0,10).toString()}.json`;
+	link.click();
+
+	URL.revokeObjectURL(link.href);
 }
 
 // App init
@@ -229,17 +237,6 @@ function handleDrop(e) {
 				importListBtn.addEventListener(`click`, importTodoList);
 				exportListBtn.addEventListener(`click`, exportTodoList);
 				newTodoBtn.addEventListener(`click`, addNewTodo);
-
-				document.querySelectorAll(`textarea`).forEach(textarea => {
-					autoHeight(textarea);
-				});
-
-				document.querySelectorAll(`[data-js=drag-and-drop]`).forEach(function(dnd) {
-				dnd.addEventListener(`dragstart`, handleDragStart, false);
-				dnd.addEventListener(`dragover`, handleDragOver, false);
-				dnd.addEventListener(`dragleave`, handleDragLeave, false);
-				dnd.addEventListener(`drop`, handleDrop, false);
-				});
 			});
 		});
 })();
