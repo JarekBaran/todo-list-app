@@ -1,10 +1,14 @@
 let todos = [];
 let draggable = null;
 
-const todoList = document.querySelector(`[data-js=show-todo-list]`);
+const prefersColorScheme = window.matchMedia(`(prefers-color-scheme: dark)`) ? `dark` : `light`;
+let getTheme = localStorage.getItem(`color-theme`) || prefersColorScheme;
+
+const toggleThemeBtn = document.querySelector(`[data-js=toggle-theme]`);
 const importListBtn = document.querySelector(`[data-js=import-todo-list]`);
 const exportListBtn = document.querySelector(`[data-js=export-todo-list]`);
 const newTodoBtn = document.querySelector(`[data-js=add-new-todo]`);
+const todoList = document.querySelector(`[data-js=show-todo-list]`);
 
 // Helpers
 const autoHeight = (element) => {
@@ -17,6 +21,19 @@ const toggleComplete = (complete, todo) => {
 		? (complete.setAttribute(`checked`, `true`), todo.classList.add(`complete`))
 		: (complete.removeAttribute(`checked`), todo.classList.remove(`complete`));
 }
+
+const setTheme = (theme = getTheme) => {
+	document.body.classList.remove(`${getTheme}-theme`);
+	document.body.classList.add(`${theme}-theme`);
+
+	toggleThemeBtn.innerHTML = `${(theme == `light`) ? `&#9789 Dark` : `&#9788 Light`}`;
+
+	localStorage.setItem(`color-theme`, theme);
+
+	getTheme = theme;
+}
+
+const toggleTheme = () => setTheme((getTheme == `light`) ? `dark` : `light`);
 
 // Todo
 const addNewTodo = () => {
@@ -229,11 +246,13 @@ const exportTodoList = () => {
 (function() {
 	loadTodoList
 		.then(
+			setTheme(),
 			displayTodoList(),
 			error => console.warn(error)
 		)
 		.then(() => {
 			window.addEventListener(`load`, () => {
+				toggleThemeBtn.addEventListener(`click`, toggleTheme);
 				importListBtn.addEventListener(`click`, importTodoList);
 				exportListBtn.addEventListener(`click`, exportTodoList);
 				newTodoBtn.addEventListener(`click`, addNewTodo);

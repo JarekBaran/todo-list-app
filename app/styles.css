@@ -2,12 +2,39 @@
 	--font-family: sans-serif;
 	--font-weight: 400;
 	--font-size: 14px;
-
-	--color-text: #fff;
-	--color-background: #393053;
-
+	
 	--container-width: 576px;
 	--container-space: 1rem;
+
+	color-scheme: light dark;
+
+	--color-primary: #222;
+	--color-secondary: #f2f2f2;
+}
+
+
+@media (prefers-color-scheme: light) {
+	:root {
+		--color-text: var(--color-primary);
+		--color-background: var(--color-secondary);
+	}
+
+	.dark-theme {
+		--color-text: var(--color-secondary);
+		--color-background: var(--color-primary);
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--color-text: var(--color-secondary);
+		--color-background: var(--color-primary);
+	}
+
+	.light-theme {
+		--color-text: var(--color-primary);
+		--color-background: var(--color-secondary);
+	}
 }
 
 * {
@@ -45,6 +72,7 @@ button {
 	cursor: pointer;
 	margin-left: auto;
 	white-space: nowrap;
+	text-transform: capitalize;
 }
 
 input[type=file] {
