@@ -11,9 +11,51 @@ const newTodoBtn = document.querySelector(`[data-js=add-new-todo]`);
 const todoList = document.querySelector(`[data-js=show-todo-list]`);
 
 // Helpers
+function handleDragStart(e) {
+	draggable = this;
+	draggable.classList.add(`draggable`);
+}
+
+function handleDragOver(e) {
+	if (e.preventDefault) {
+		e.preventDefault();
+	}
+
+	e.dataTransfer.dropEffect = `move`;
+	this.classList.add(`over`);
+	
+	return false;
+}
+
+function handleDragLeave() {
+	this.classList.remove(`over`);
+}
+
+function handleDrop(e) {
+	if (e.stopPropagation) {
+		e.stopPropagation();
+	}
+
+	draggable.classList.remove(`draggable`);
+	this.classList.remove(`over`);
+	
+	if (draggable != this) {
+		const srcIndex = todos.findIndex(todo => todo.id == draggable.dataset.id);
+		const targetIndex = todos.findIndex(todo => todo.id == this.dataset.id);
+
+		(srcIndex > targetIndex)
+			? this.before(draggable)
+			: this.after(draggable);
+
+		replaceTodo(srcIndex, targetIndex);
+	}
+
+	return false;
+}
+
 const autoHeight = (element) => {
 	element.style.height = `auto`;
-	element.style.height = `${element.scrollHeight}px`;
+	element.style.height = `${element.scrollHeight + 2}px`;
 }
 
 const toggleComplete = (complete, todo) => {
@@ -70,7 +112,6 @@ const createTodo = (newTodo) => {
 	const todo = document.createElement(`li`);
 	todo.classList.add(`row`, `todo`);
 	todo.setAttribute(`data-id`, newTodo.id);
-	todo.setAttribute(`data-js`, `drag-and-drop`);
 
 	const handler = document.createElement(`button`);
 	handler.type = `button`;
@@ -99,6 +140,11 @@ const createTodo = (newTodo) => {
 	actions.append(edit, remove);
 	todo.append(handler, complete, text, actions);
 
+	todo.addEventListener(`dragstart`, handleDragStart, false);
+	todo.addEventListener(`dragover`, handleDragOver, false);
+	todo.addEventListener(`dragleave`, handleDragLeave, false);
+	todo.addEventListener(`drop`, handleDrop, false);
+
 	complete.addEventListener(`change`, () => {
 		newTodo.complete = complete.checked;
 		toggleComplete(complete, todo);
@@ -115,6 +161,8 @@ const createTodo = (newTodo) => {
 		text.setAttribute(`disabled`, `true`);
 
 		!text.value.length && removeTodo(newTodo.id, todo);
+		
+		saveTodoList();
 	});
 
 	edit.addEventListener(`click`, () => {
@@ -125,49 +173,6 @@ const createTodo = (newTodo) => {
 	remove.addEventListener(`click`, () => window.confirm(`Remove todo? - "${newTodo.text}"`) && removeTodo(newTodo.id, todo));
 
 	return {todo, text}
-}
-
-// Drag and drop handlers
-function handleDragStart(e) {
-	draggable = this;
-	draggable.classList.add(`draggable`);
-}
-
-function handleDragOver(e) {
-	if (e.preventDefault) {
-		e.preventDefault();
-	}
-
-	e.dataTransfer.dropEffect = `move`;
-	this.classList.add(`over`);
-	
-	return false;
-}
-
-function handleDragLeave() {
-	this.classList.remove(`over`);
-}
-
-function handleDrop(e) {
-	if (e.stopPropagation) {
-		e.stopPropagation();
-	}
-
-	draggable.classList.remove(`draggable`);
-	this.classList.remove(`over`);
-	
-	if (draggable != this) {
-		const srcIndex = todos.findIndex(todo => todo.id == draggable.dataset.id);
-		const targetIndex = todos.findIndex(todo => todo.id == this.dataset.id);
-
-		(srcIndex > targetIndex)
-			? this.before(draggable)
-			: this.after(draggable);
-
-		replaceTodo(srcIndex, targetIndex);
-	}
-
-	return false;
 }
 
 // List
@@ -184,15 +189,6 @@ const displayTodoList = () => {
 	todoList.querySelectorAll(`textarea`).forEach(textarea => {
 		autoHeight(textarea);
 	});
-
-	todoList.querySelectorAll(`[data-js=drag-and-drop]`).forEach(dnd => {
-		dnd.addEventListener(`dragstart`, handleDragStart, false);
-		dnd.addEventListener(`dragover`, handleDragOver, false);
-		dnd.addEventListener(`dragleave`, handleDragLeave, false);
-		dnd.addEventListener(`drop`, handleDrop, false);
-	});
-
-	saveTodoList();
 }
 
 const loadTodoList = new Promise((resolve, reject) => {
@@ -222,6 +218,7 @@ const importTodoList = () => {
 				todos = JSON.parse(reader.result);
 
 				displayTodoList();
+				saveTodoList();
 			}
 		}
 	});
