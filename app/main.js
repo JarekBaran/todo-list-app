@@ -245,14 +245,13 @@ const exportTodoList = () => {
 		.then(
 			setTheme(),
 			displayTodoList(),
-			error => console.warn(error)
-		)
-		.then(() => {
 			window.addEventListener(`load`, () => {
 				toggleThemeBtn.addEventListener(`click`, toggleTheme);
 				importListBtn.addEventListener(`click`, importTodoList);
 				exportListBtn.addEventListener(`click`, exportTodoList);
 				newTodoBtn.addEventListener(`click`, addNewTodo);
-			});
+			})
+		).catch((error) => {
+			console.warn(error);
 		});
 })();
